@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "573884252016",
+    "firebase_url": "https://lms-clone.firebaseio.com",
+    "project_id": "lms-clone",
+    "storage_bucket": "lms-clone.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:573884252016:android:36b8130be1579a89",
+        "android_client_info": {
+          "package_name": "com.lmsclient"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "573884252016-bhl6vq1m08ve2cn4q6536cuvsm93mnp9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lmsclient",
+            "certificate_hash": "cd57f7a4b08a2ef6728f3180235ba5022c56babf"
+          }
+        },
+        {
+          "client_id": "573884252016-kjvplup4n39d3ngis7tdsgpq209dj2en.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANOtURsmgUS9B-_QjdjTAhzQE-R2Tl_to"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "573884252016-kjvplup4n39d3ngis7tdsgpq209dj2en.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
