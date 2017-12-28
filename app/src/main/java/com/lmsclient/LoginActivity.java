@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -34,6 +35,7 @@ import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
@@ -47,6 +49,46 @@ public class LoginActivity extends AppCompatActivity {
     private EditText passwordView;
     private ScrollView formView;
     private View mProgressView;
+    private DatabaseReference reference;
+    private String id;
+    private String pwd;
+    private Handler handler=new Handler();
+    private ValueEventListener listener = new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            if(dataSnapshot.exists()) {
+                try {
+                    if(dataSnapshot.getValue(String.class).equals(pwd)) {
+                        getPreferences(0).edit().putString("u_id", id).apply();
+                        getPreferences(0).edit().putString("u_pwd", pwd).apply();
+                        Toast.makeText(getApplicationContext(), "Success", Toast.LENGTH_LONG).show();
+                        MainActivity.reference=reference.getParent();
+                        startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                        finish();
+                    }
+                }
+                catch(Exception ignored) {}
+            }
+            else {
+                Toast.makeText(getApplicationContext(), "Failure", Toast.LENGTH_LONG).show();
+                showProgress(false);
+            }
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+            Toast.makeText(getApplicationContext(), "Failed Bad", Toast.LENGTH_LONG).show();
+        }
+    };
+
+    private Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            reference.removeEventListener(listener);
+            showProgress(false);
+            handler.removeCallbacks(runnable);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,8 +108,19 @@ public class LoginActivity extends AppCompatActivity {
                 return false;
             }
         });
-
         Button button = findViewById(R.id.button);
+        mProgressView = findViewById(R.id.login_progress);
+
+        id=getPreferences(0).getString("u_id", null);
+        if(id!=null) {
+            idView.setText(id);
+        }
+        pwd=getPreferences(0).getString("u_pwd", null);
+        if(pwd!=null) {
+            passwordView.setText(pwd);
+            attemptLogin();
+        }
+
         button.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -75,15 +128,14 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        mProgressView = findViewById(R.id.login_progress);
     }
 
     private void attemptLogin() {
         idView.setError(null);
         passwordView.setError(null);
 
-        String id = idView.getText().toString();
-        String pwd = passwordView.getText().toString();
+        id = idView.getText().toString();
+        pwd = passwordView.getText().toString();
 
         boolean cancel = false;
         View focusView = null;
@@ -105,25 +157,9 @@ public class LoginActivity extends AppCompatActivity {
         }
         else {
             showProgress(true);
-            FirebaseDatabase.getInstance().getReference(id).child("pwd").addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if(dataSnapshot.exists()) {
-                        Toast.makeText(getApplicationContext(), "Success", Toast.LENGTH_LONG).show();
-                        startActivity(new Intent(getApplicationContext(), MainActivity.class));
-                        finish();
-                    }
-                    else {
-                        Toast.makeText(getApplicationContext(), "Failure", Toast.LENGTH_LONG).show();
-                        showProgress(false);
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                    Toast.makeText(getApplicationContext(), "Failed Bad", Toast.LENGTH_LONG).show();
-                }
-            });
+            reference = FirebaseDatabase.getInstance().getReference(id).child("pwd");
+            reference.addListenerForSingleValueEvent(listener);
+            handler.postDelayed(runnable, 15000);
         }
     }
 
