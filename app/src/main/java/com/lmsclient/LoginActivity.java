@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -26,6 +27,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class LoginActivity extends AppCompatActivity {
+    public static SharedPreferences prefs;
     private EditText idView;
     private EditText passwordView;
     private ScrollView formView;
@@ -40,8 +42,8 @@ public class LoginActivity extends AppCompatActivity {
             if(dataSnapshot.exists()) {
                 try {
                     if(dataSnapshot.getValue(String.class).equals(pwd)) {
-                        getPreferences(0).edit().putString("u_id", id).apply();
-                        getPreferences(0).edit().putString("u_pwd", pwd).apply();
+                        prefs.edit().putString("u_id", id).apply();
+                        prefs.edit().putString("u_pwd", pwd).apply();
                         Toast.makeText(getApplicationContext(), "Success", Toast.LENGTH_LONG).show();
                         MainActivity.reference=reference.getParent();
                         startActivity(new Intent(getApplicationContext(), MainActivity.class));
@@ -92,13 +94,17 @@ public class LoginActivity extends AppCompatActivity {
         Button button = findViewById(R.id.button);
         mProgressView = findViewById(R.id.login_progress);
 
-        id=getPreferences(0).getString("u_id", null);
+        prefs=getPreferences(0);
+
+        id=prefs.getString("u_id", null);
         if(id!=null) {
             idView.setText(id);
         }
-        pwd=getPreferences(0).getString("u_pwd", null);
+        pwd=prefs.getString("u_pwd", null);
         if(pwd!=null) {
             passwordView.setText(pwd);
+        }
+        if(pwd!=null&&id!=null) {
             attemptLogin();
         }
 

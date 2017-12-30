@@ -10,23 +10,21 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 
 /**
- * Created by Mahad Ahmed on 12/26/2017.
+ * Created by Mahad Ahmed on 12/30/17.
  */
 
-public class Courses extends Fragment {
-
+public class FragmentChat extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View v=inflater.inflate(R.layout.fragment_courses, container, false);
-        ((ListView)v.findViewById(R.id.course_list)).setAdapter(MainActivity.courseAdapter);
+        View v=inflater.inflate(R.layout.fragment_chat, container, false);
+        ((ListView)v.findViewById(R.id.chat_list)).setAdapter(MainActivity.chatAdapter);
         return v;
-//        return super.onCreateView(inflater, container, savedInstanceState);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        getActivity().setTitle("Courses");
+        getActivity().setTitle("Chat");
     }
 }
