@@ -8,11 +8,13 @@ import java.util.ArrayList;
 
 public class Chat {
     String otherUser;
-    String messages;
+    String name;
+    ArrayList<String> messages;
 
-    public Chat(String user, String msg) {
-//        messages=new ArrayList<>();
+    public Chat(String user, String n, String msg) {
         otherUser=user;
-        messages=msg;
+        name=n;
+        messages=new ArrayList<>();
+        messages.add(msg);
     }
 }

@@ -44,7 +44,7 @@ public class LoginActivity extends AppCompatActivity {
                     if(dataSnapshot.getValue(String.class).equals(pwd)) {
                         prefs.edit().putString("u_id", id).apply();
                         prefs.edit().putString("u_pwd", pwd).apply();
-                        Toast.makeText(getApplicationContext(), "Success", Toast.LENGTH_LONG).show();
+//                        Toast.makeText(getApplicationContext(), "Success", Toast.LENGTH_LONG).show();
                         MainActivity.reference=reference.getParent();
                         startActivity(new Intent(getApplicationContext(), MainActivity.class));
                         finish();

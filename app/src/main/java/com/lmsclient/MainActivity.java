@@ -13,12 +13,13 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.SparseArray;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -39,6 +40,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     HashMap<String, Chat> chatHashMap=new HashMap<>();
 
     public static DatabaseReference reference;
+
+    public static AdapterView.OnItemClickListener itemClickListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,24 +114,47 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     convertView=getLayoutInflater().inflate(R.layout.chat_view, parent, false);
                 }
                 Chat chat=chatList.get(position);
-                ((TextView)convertView.findViewById(R.id.chatlist_userid)).setText(chat.otherUser);
+                ((TextView)convertView.findViewById(R.id.chatlist_userid)).setText(chat.name);
 //                ((TextView)convertView.findViewById(R.id.chatlist_last)).setText(chat.messages.get(chat.messages.size()-1));
-                ((TextView)convertView.findViewById(R.id.chatlist_last)).setText(chat.messages);
+                ((TextView)convertView.findViewById(R.id.chatlist_last)).setText(chat.messages.get(chat.messages.size()-1));
                 return convertView;
             }
         };
 
         reference.child("Chat").addChildEventListener(new ChildEventListener() {
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                Chat tmp=new Chat(dataSnapshot.getKey(), dataSnapshot.getValue(String.class));
-                chatHashMap.put(dataSnapshot.getKey(), tmp);
-                chatAdapter.add(tmp);
+            public void onChildAdded(final DataSnapshot dataSnapshot, String s) {
+                final String key=dataSnapshot.getKey();
+                reference.getParent().child(dataSnapshot.getKey()).child("Name").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot data) {
+                        Chat tmp;
+                        if(data.exists()) {
+                            tmp = new Chat(key, data.getValue(String.class), "");
+                        }
+                        else {
+                            tmp = new Chat(key, key, "");
+                        }
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            tmp.messages.add(snapshot.getValue(String.class));
+                        }
+                        chatHashMap.put(key, tmp);
+                        chatAdapter.add(tmp);
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        //
+                    }
+                });
             }
 
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                chatHashMap.get(dataSnapshot.getKey()).messages=dataSnapshot.getValue(String.class);
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    chatHashMap.get(dataSnapshot.getKey()).messages.add(snapshot.getValue(String.class));
+                }
+                chatAdapter.notifyDataSetChanged();
             }
 
             @Override
@@ -147,6 +173,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             }
         });
+
+        itemClickListener=new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Fragment fragment=new FragmentChatbox();
+                Bundle bundle=new Bundle();
+                bundle.putString("uname", chatList.get(i).name);
+                fragment.setArguments(bundle);
+                FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
+                transaction.replace(R.id.container, fragment);
+                transaction.addToBackStack("");
+                transaction.commit();
+            }
+        };
 
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -177,17 +217,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.nav_courses) {
@@ -201,6 +230,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
             transaction.replace(R.id.container, fragment);
             transaction.commit();
+        }
+        else if(id == R.id.nav_account) {
+            reference.child("Chat").child("07409").push().setValue("Woah hello"+Math.random());
         }
         else if(id == R.id.nav_signout) {
             LoginActivity.prefs.edit().remove("u_pwd").apply();
