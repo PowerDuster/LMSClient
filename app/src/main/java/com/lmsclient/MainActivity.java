@@ -6,6 +6,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -26,17 +27,20 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.StorageReference;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     public static DatabaseReference reference;
+    public static String name="";
 
     public static ArrayAdapter<Course> courseAdapter;
-    ArrayList<Course> courseList =new ArrayList<>();
+    public static ArrayList<Course> courseList =new ArrayList<>();
     SparseArray<Course> courseMap=new SparseArray<>();
 
     public static ArrayAdapter<Chat> chatAdapter;
@@ -49,7 +53,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public static ArrayAdapter<String[]> classesAdapter;
     ArrayList<String[]> classesList=new ArrayList<>();
 
-    public static AdapterView.OnItemClickListener itemClickListener;
+//    public static ArrayAdapter<String> filesAdapter;
+//    public static ArrayList<String> fileList=new ArrayList<>();
+
+    public static ArrayAdapter<String> notifAdapter;
+    public static ArrayList<String> notifList=new ArrayList<>();
+
+    public static FragmentManager fragmentManager;
+
+//    public static AdapterView.OnItemClickListener itemClickListener=new AdapterView.OnItemClickListener() {
+//        @Override
+//        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+//            Fragment fragment=new FragmentChatbox();
+//            Bundle bundle=new Bundle();
+//            bundle.putInt("position", i);
+//            fragment.setArguments(bundle);
+//            FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
+//            transaction.replace(R.id.container, fragment);
+//            transaction.addToBackStack("");
+//            transaction.commit();
+//        }
+//    };
 
 
 
@@ -59,6 +83,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        fragmentManager=getSupportFragmentManager();
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -72,8 +98,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 if(convertView==null) {
                     convertView=getLayoutInflater().inflate(R.layout.list_view_item, parent, false);
                 }
-                ((TextView)convertView.findViewById(R.id.item_head)).setText(assignmentList.get(position)[0]);
-                ((TextView)convertView.findViewById(R.id.item_text)).setText(assignmentList.get(position)[1]);
+                ((TextView)convertView.findViewById(R.id.item_head)).setText(classesList.get(position)[0]);
+                ((TextView)convertView.findViewById(R.id.item_text)).setText(classesList.get(position)[1]);
                 return convertView;
             }
         };
@@ -91,9 +117,26 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 return convertView;
             }
         };
+
+//        String date = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date());
+//        Toast.makeText(this, date, Toast.LENGTH_LONG).show();
+
+        assignmentListAdapter=new ArrayAdapter<String[]>(this, R.layout.list_view_item, assignmentList) {
+            @NonNull
+            @Override
+            public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                if(convertView==null) {
+                    convertView=getLayoutInflater().inflate(R.layout.list_view_item, parent, false);
+                }
+                ((TextView)convertView.findViewById(R.id.item_head)).setText(assignmentList.get(position)[0]);
+                ((TextView)convertView.findViewById(R.id.item_text)).setText(assignmentList.get(position)[1]);
+                return convertView;
+            }
+        };
+
         reference.child("Courses").addChildEventListener(new ChildEventListener() {
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+            public void onChildAdded(final DataSnapshot dataSnapshot, String s) {
                 reference.getParent().child("Courses").child(dataSnapshot.getKey()).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnap) {
@@ -105,10 +148,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                 sessions.append(dTmp).append(" ")
                                         .append(tTmp).append(" - ")
                                         .append(snapshot.child("End").getValue(String.class)).append('\n');
-                                classesAdapter.add(new String[] {"Class at "+tTmp+" on "+dTmp});
+                                classesAdapter.add(new String[] {"Class at "+tTmp+" on "+dTmp, dataSnap.child("Name").getValue(String.class)});
+                            }
+                            StringBuilder pres = new StringBuilder();
+                            for (DataSnapshot snapshot : dataSnap.child("prereqs").getChildren()) {
+                                pres.append(snapshot.getValue(String.class));
+                                pres.append("\n");
+                            }
+                            for (DataSnapshot snapshot : dataSnap.child("Assignments").getChildren()) {
+                                assignmentListAdapter.add(new String[] {"Due at "+snapshot.child("Due").getValue(String.class),
+                                    snapshot.child("Title").getValue(String.class)});
                             }
                             sessions.deleteCharAt(sessions.length() - 1);
-                            Course tmp = new Course(dataSnap.child("Name").getValue(String.class), dataSnap.child("Instructor").getValue(String.class), sessions.toString());
+                            Course tmp = new Course(dataSnap.child("Name").getValue(String.class), dataSnapshot.getKey(), dataSnap.child("Overview").getValue(String.class), pres.toString(), dataSnap.child("Instructor").getValue(String.class), sessions.toString());
                             courseMap.put(Integer.parseInt(dataSnap.getKey()), tmp);
                             courseAdapter.add(tmp);
                         }
@@ -214,34 +266,43 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
-        assignmentListAdapter=new ArrayAdapter<String[]>(this, R.layout.list_view_item, assignmentList) {
+        notifAdapter=new ArrayAdapter<String>(this, R.layout.notification_view, notifList) {
             @NonNull
             @Override
             public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
                 if(convertView==null) {
-                    convertView=getLayoutInflater().inflate(R.layout.list_view_item, parent, false);
+                    convertView=getLayoutInflater().inflate(R.layout.notification_view, parent, false);
                 }
-                ((TextView)convertView.findViewById(R.id.item_head)).setText(assignmentList.get(position)[0]);
-                ((TextView)convertView.findViewById(R.id.item_text)).setText(assignmentList.get(position)[1]);
-                return convertView;
+                ((TextView)convertView.findViewById(R.id.notif_text)).setText(notifList.get(position));
+                return super.getView(position, convertView, parent);
             }
         };
-        assignmentListAdapter.add(new String[] {"Due at 11:55pm", "Consumer Behaviour"});
-
-
-        itemClickListener=new AdapterView.OnItemClickListener() {
+        reference.child("Notifications").addChildEventListener(new ChildEventListener() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Fragment fragment=new FragmentChatbox();
-                Bundle bundle=new Bundle();
-                bundle.putInt("position", i);
-                fragment.setArguments(bundle);
-                FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
-                transaction.replace(R.id.container, fragment);
-                transaction.addToBackStack("");
-                transaction.commit();
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                notifAdapter.add(dataSnapshot.getValue(String.class));
             }
-        };
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
 
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -249,7 +310,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         reference.child("Name").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                ((TextView)findViewById(R.id.nav_nameview)).setText(dataSnapshot.getValue(String.class));
+                if(dataSnapshot.exists()) {
+                    name=dataSnapshot.getValue(String.class);
+                    ((TextView)findViewById(R.id.nav_nameview)).setText(name);
+                }
                 ((TextView)findViewById(R.id.nav_idview)).setText(reference.getKey());
             }
 
@@ -258,6 +322,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             }
         });
+
+        Fragment fragment=new FragmentHome();
+        FragmentTransaction transaction=fragmentManager.beginTransaction();
+        transaction.replace(R.id.container, fragment);
+        transaction.commit();
     }
 
 
@@ -288,27 +357,35 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.nav_courses) {
+        if (id == R.id.nav_home) {
+            Fragment fragment=new FragmentHome();
+            FragmentTransaction transaction=fragmentManager.beginTransaction();
+            transaction.replace(R.id.container, fragment);
+            transaction.commit();
+        }
+        else if (id == R.id.nav_courses) {
             Fragment fragment=new FragmentCourse();
-            FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
+            FragmentTransaction transaction=fragmentManager.beginTransaction();
             transaction.replace(R.id.container, fragment);
             transaction.commit();
         }
         else if(id == R.id.nav_chat) {
             Fragment fragment=new FragmentChat();
-            FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
+            FragmentTransaction transaction=fragmentManager.beginTransaction();
             transaction.replace(R.id.container, fragment);
             transaction.commit();
         }
         else if(id == R.id.nav_schedule) {
             Fragment fragment=new FragmentSchedule();
-            FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
+            FragmentTransaction transaction=fragmentManager.beginTransaction();
             transaction.replace(R.id.container, fragment);
             transaction.commit();
         }
         else if(id == R.id.nav_account) {
-//            StorageReference
-            reference.child("Chat").child("07409").push().setValue("Woah hello"+Math.random());
+            Fragment fragment=new FragmentAccount();
+            FragmentTransaction transaction=fragmentManager.beginTransaction();
+            transaction.replace(R.id.container, fragment);
+            transaction.commit();
         }
         else if(id == R.id.nav_signout) {
             LoginActivity.prefs.edit().remove("u_pwd").apply();

@@ -10,44 +10,44 @@ import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CalendarView;
 
 /**
- * Created by Mahad Ahmed on 1/1/18.
+ * Created by Mahad Ahmed on 1/3/18.
  */
 
-public class FragmentSchedule extends Fragment {
+public class FragmentFullCourseView extends Fragment {
+    public static int position;
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View v=inflater.inflate(R.layout.fragment_schedule, container, false);
-        ((ViewPager)v.findViewById(R.id.pager)).setAdapter(new SchedulePagerAdapter(getChildFragmentManager()));
-//        ((CalendarView)v.findViewById(R.id.calendar)).set
+        position=getArguments().getInt("position");
+        View v=inflater.inflate(R.layout.fragment_fullcourse, container, false);
+        ((ViewPager)v.findViewById(R.id.course_pager)).setAdapter(new CoursePagerAdapter(getChildFragmentManager()));
         return v;
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        getActivity().setTitle("Schedule");
+        getActivity().setTitle(MainActivity.courseList.get(position).name);
     }
 }
 
-class SchedulePagerAdapter extends FragmentPagerAdapter {
-    SchedulePagerAdapter(FragmentManager fragmentManager) {
+class CoursePagerAdapter extends FragmentPagerAdapter {
+    CoursePagerAdapter(FragmentManager fragmentManager) {
         super(fragmentManager);
     }
 
     @Override
     public Fragment getItem(int position) {
         if(position==0) {
-            return new AssignmentListFragment();
+            return new FragmentOverview();
         }
         else if(position==1) {
-            return new ClassListFragment();
+            return new FragmentResources();
         }
         else {
-            return new ClassListFragment();
+            return new FragmentAssignments();
         }
     }
 
@@ -55,19 +55,18 @@ class SchedulePagerAdapter extends FragmentPagerAdapter {
     @Override
     public CharSequence getPageTitle(int position) {
         if(position==0) {
-            return "Assignments";
+            return "Overview";
         }
         else if(position==1) {
-            return "Classes";
+            return "Resources";
         }
         else {
-            return "Quizes";
+            return "Assignments";
         }
-//        return super.getPageTitle(position);
     }
 
     @Override
     public int getCount() {
-        return 2;
+        return 3;
     }
 }

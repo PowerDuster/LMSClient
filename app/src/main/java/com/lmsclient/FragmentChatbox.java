@@ -13,9 +13,6 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-/**
- * Created by Mahad Ahmed on 12/31/17.
- */
 
 public class FragmentChatbox extends Fragment {
     ArrayList<String> messageList=new ArrayList<>();
