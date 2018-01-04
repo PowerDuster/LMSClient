@@ -157,7 +157,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             }
                             ///////////////////////////////////////////////
                             sessions.deleteCharAt(sessions.length() - 1);
-                            Course tmp = new Course(dataSnap.child("Name").getValue(String.class), dataSnapshot.getKey(), dataSnap.child("Overview").getValue(String.class), pres.toString(), dataSnap.child("Instructor").getValue(String.class), sessions.toString());
+                            Integer i=dataSnap.child("Creds").getValue(Integer.class);
+                            if(i==null) {
+                                i=3;
+                            }
+                            Course tmp = new Course(dataSnap.child("Name").getValue(String.class), dataSnapshot.getKey(), dataSnap.child("Overview").getValue(String.class), pres.toString(), dataSnap.child("Instructor").getValue(String.class), sessions.toString(), i);
                             courseMap.put(Integer.parseInt(dataSnap.getKey()), tmp);
                             courseAdapter.add(tmp);
                         }

@@ -14,7 +14,8 @@ public class Course {
     DatabaseReference courseReference;
     String instructor;
     String sessions;
-    Course(String name, String ID, String over, String pre, String ins, String s) {
+    int credits;
+    Course(String name, String ID, String over, String pre, String ins, String s, int creds) {
         this.name=name;
         id=ID;
         courseReference=MainActivity.reference.getParent().child("Courses").child(id);
@@ -22,5 +23,6 @@ public class Course {
         prereqs=pre;
         this.instructor=ins;
         this.sessions=s;
+        credits=creds;
     }
 }

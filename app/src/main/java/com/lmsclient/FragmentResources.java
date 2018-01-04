@@ -1,8 +1,11 @@
 package com.lmsclient;
 
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -11,6 +14,7 @@ import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -40,6 +44,8 @@ public class FragmentResources extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         course=MainActivity.courseList.get(FragmentFullCourseView.position);
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        StrictMode.setVmPolicy(builder.build());
         View v=inflater.inflate(R.layout.fragment_resources, container, false);
         ListView listView=v.findViewById(R.id.file_list);
         fileList=new ArrayList<>();
@@ -98,6 +104,10 @@ public class FragmentResources extends Fragment {
                         @Override
                         public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                             Toast.makeText(getContext(), arr[arr.length-1]+" downloaded", Toast.LENGTH_LONG).show();
+                            Intent intent = new Intent();
+                            intent.setAction(android.content.Intent.ACTION_VIEW);
+                            intent.setDataAndType(Uri.fromFile(file),getMimeType(file.getAbsolutePath()));
+                            startActivity(intent);
                         }
                     });
                 } catch (Exception e) {
@@ -108,5 +118,15 @@ public class FragmentResources extends Fragment {
         ;
 //        storageRef
         return v;
+    }
+    private String getMimeType(String url) {
+        String parts[]=url.split("\\.");
+        String extension=parts[parts.length-1];
+        String type = null;
+        if (extension != null) {
+            MimeTypeMap mime = MimeTypeMap.getSingleton();
+            type = mime.getMimeTypeFromExtension(extension);
+        }
+        return type;
     }
 }
