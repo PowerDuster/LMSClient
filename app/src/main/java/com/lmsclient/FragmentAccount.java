@@ -21,12 +21,16 @@ public class FragmentAccount extends Fragment {
         final View v=inflater.inflate(R.layout.fragment_account, container, false);
         ((TextView)v.findViewById(R.id.uname)).setText(MainActivity.name);
         ((TextView)v.findViewById(R.id.erp_id)).setText(MainActivity.reference.getKey());
-        MainActivity.reference.child("Program").addListenerForSingleValueEvent(new ValueEventListener() {
+        MainActivity.reference.child("UserInfo").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists()) {
-                    ((TextView)v.findViewById(R.id.prog)).setText(dataSnapshot.getValue(String.class));
-//                    program=dataSnapshot.getValue(String.class);
+                    try {
+                        ((TextView)v.findViewById(R.id.prog)).setText(dataSnapshot.child("Program").getValue(String.class));
+                        ((TextView)v.findViewById(R.id.contact)).setText(dataSnapshot.child("Contact").getValue(String.class));
+                        ((TextView)v.findViewById(R.id.email)).setText(dataSnapshot.child("Email").getValue(String.class));
+                    }
+                    catch(Exception ignored) {}
                 }
             }
 

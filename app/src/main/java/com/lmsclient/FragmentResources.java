@@ -1,10 +1,13 @@
 package com.lmsclient;
 
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,7 +50,10 @@ public class FragmentResources extends Fragment {
                 if(convertView==null) {
                     convertView=getLayoutInflater().inflate(R.layout.list_view_item, parent, false);
                 }
-                ((TextView)convertView.findViewById(R.id.item_head)).setText("");
+                String tmp[]=fileList.get(position).split("/");
+                if(tmp.length>0) {
+                    ((TextView)convertView.findViewById(R.id.item_head)).setText(tmp[tmp.length-1]);
+                }
                 ((TextView)convertView.findViewById(R.id.item_text)).setText(fileList.get(position));
                 return convertView;
             }
@@ -76,6 +82,10 @@ public class FragmentResources extends Fragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                if (ContextCompat.checkSelfPermission(getContext(),
+                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(getActivity(), new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+                }
                 String tmp=fileList.get(i);
                 StorageReference storageRef=FirebaseStorage.getInstance().getReferenceFromUrl(tmp);
                 final String arr[]=tmp.split("/");
