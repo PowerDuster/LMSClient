@@ -73,6 +73,14 @@
                 android:text="log in"
                 android:textStyle="bold" />
 
+            <Button
+                android:textColor="#00f"
+                android:id="@+id/forgot"
+                style="@style/Widget.AppCompat.Button.Borderless"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Forgot Password" />
+
         </LinearLayout>
     </ScrollView>
 </RelativeLayout>

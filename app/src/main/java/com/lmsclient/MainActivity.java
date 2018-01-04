@@ -17,10 +17,8 @@ import android.util.SparseArray;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -28,11 +26,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -53,9 +48,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public static ArrayAdapter<String[]> classesAdapter;
     ArrayList<String[]> classesList=new ArrayList<>();
 
-//    public static ArrayAdapter<String> filesAdapter;
-//    public static ArrayList<String> fileList=new ArrayList<>();
-
     public static ArrayAdapter<String> notifChatAdapter;
     public static ArrayList<String> notifChatList=new ArrayList<>();
 
@@ -63,21 +55,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public static ArrayList<String> notifResourceList=new ArrayList<>();
 
     public static FragmentManager fragmentManager;
-
-//    public static AdapterView.OnItemClickListener itemClickListener=new AdapterView.OnItemClickListener() {
-//        @Override
-//        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-//            Fragment fragment=new FragmentChatbox();
-//            Bundle bundle=new Bundle();
-//            bundle.putInt("position", i);
-//            fragment.setArguments(bundle);
-//            FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
-//            transaction.replace(R.id.container, fragment);
-//            transaction.addToBackStack("");
-//            transaction.commit();
-//        }
-//    };
-
 
 
     @Override
@@ -261,12 +238,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    chatHashMap.get(dataSnapshot.getKey()).messages.add(snapshot.getValue(String.class));
-                    FragmentChatbox.adapter.add(snapshot.getValue(String.class));
-                }
-                chatAdapter.notifyDataSetChanged();
-                FragmentChatbox.adapter.notifyDataSetChanged();
+//                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+//                    chatHashMap.get(dataSnapshot.getKey()).messages.add(snapshot.getValue(String.class));
+//                    FragmentChatbox.adapter.add(snapshot.getValue(String.class));
+//                }
+//                chatAdapter.notifyDataSetChanged();
+//                FragmentChatbox.adapter.notifyDataSetChanged();
             }
 
             @Override
