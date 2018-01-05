@@ -25,6 +25,29 @@ public class FragmentAssignments extends Fragment {
     static ArrayAdapter<String[]> assignmentsAdapter;
     static ArrayList<String[]> assignmentsList;
     Course course;
+    ChildEventListener listener=new ChildEventListener() {
+        @Override
+        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+            try {
+                assignmentsAdapter.add(new String[] {"Due at "+dataSnapshot.child("Due").getValue(String.class),
+                        dataSnapshot.child("Title").getValue(String.class)});
+            }
+            catch(Exception ignored) {}
+        }
+        @Override
+        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+        }
+        @Override
+        public void onChildRemoved(DataSnapshot dataSnapshot) {
+        }
+        @Override
+        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+        }
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+        }
+    };
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -45,28 +68,15 @@ public class FragmentAssignments extends Fragment {
         };
         ListView listView=v.findViewById(R.id.assign_list);
         listView.setAdapter(assignmentsAdapter);
-        course.courseReference.child("Assignments").addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                try {
-                    assignmentsAdapter.add(new String[] {"Due at "+dataSnapshot.child("Due").getValue(String.class),
-                            dataSnapshot.child("Title").getValue(String.class)});
-                }
-                catch(Exception ignored) {}
-            }
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-            }
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-            }
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-            }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-            }
-        });
+        course.courseReference.child("Assignments").addChildEventListener(listener);
         return v;
+    }
+
+    @Override
+    public void onPause() {
+        course.courseReference.child("Assignments").removeEventListener(listener);
+        assignmentsAdapter.clear();
+        assignmentsList.clear();
+        super.onPause();
     }
 }

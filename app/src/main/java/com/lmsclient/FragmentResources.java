@@ -40,6 +40,25 @@ public class FragmentResources extends Fragment {
     Course course;
     static ArrayAdapter<String> filesAdapter;
     static ArrayList<String> fileList;
+    ChildEventListener listener=new ChildEventListener() {
+        @Override
+        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+            filesAdapter.add(dataSnapshot.getValue(String.class));
+        }
+        @Override
+        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+        }
+        @Override
+        public void onChildRemoved(DataSnapshot dataSnapshot) {
+        }
+        @Override
+        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+        }
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+        }
+    };
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -66,24 +85,7 @@ public class FragmentResources extends Fragment {
         };
         listView.setAdapter(filesAdapter);
 
-        course.courseReference.child("Files").addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                filesAdapter.add(dataSnapshot.getValue(String.class));
-            }
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-            }
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-            }
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-            }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-            }
-        });
+        course.courseReference.child("Files").addChildEventListener(listener);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -119,6 +121,15 @@ public class FragmentResources extends Fragment {
 //        storageRef
         return v;
     }
+
+    @Override
+    public void onPause() {
+        course.courseReference.child("Files").removeEventListener(listener);
+        filesAdapter.clear();
+        fileList.clear();
+        super.onPause();
+    }
+
     private String getMimeType(String url) {
         String parts[]=url.split("\\.");
         String extension=parts[parts.length-1];

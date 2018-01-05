@@ -34,6 +34,8 @@ public class FragmentChat extends Fragment {
         ListView lv=v.findViewById(R.id.chat_list);
         lv.setAdapter(MainActivity.chatAdapter);
         lv.setOnItemClickListener(itemClickListener);
+        MainActivity.notifChatAdapter.clear();
+        MainActivity.notifChatList.clear();
         return v;
     }
 

@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -26,13 +27,20 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     public static DatabaseReference reference;
     public static String name="";
+    public static String erp="";
 
     public static ArrayAdapter<Course> courseAdapter;
     public static ArrayList<Course> courseList =new ArrayList<>();
@@ -98,8 +106,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         };
 
-//        String date = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date());
-//        Toast.makeText(this, date, Toast.LENGTH_LONG).show();
+        String date = new SimpleDateFormat("E dd-MM-yyyy hh:mma", Locale.getDefault()).format(new Date());
+        Toast.makeText(this, date, Toast.LENGTH_LONG).show();
 
         assignmentListAdapter=new ArrayAdapter<String[]>(this, R.layout.list_view_item, assignmentList) {
             @NonNull
@@ -197,6 +205,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
+        notifChatAdapter=new ArrayAdapter<String>(this, R.layout.notification_view, notifChatList) {
+            @NonNull
+            @Override
+            public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                if(convertView==null) {
+                    convertView=getLayoutInflater().inflate(R.layout.notification_view, parent, false);
+                }
+                ((TextView)convertView.findViewById(R.id.notif_text)).setText(notifChatList.get(position));
+                return super.getView(position, convertView, parent);
+            }
+        };
 
         chatAdapter=new ArrayAdapter<Chat>(this, R.layout.chat_view, chatList) {
             @NonNull
@@ -207,47 +226,55 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
                 Chat chat=chatList.get(position);
                 ((TextView)convertView.findViewById(R.id.chatlist_userid)).setText(chat.name);
-//                ((TextView)convertView.findViewById(R.id.chatlist_last)).setText(chat.messages.get(chat.messages.size()-1));
-                ((TextView)convertView.findViewById(R.id.chatlist_last)).setText(chat.messages.get(chat.messages.size()-1));
+                ((TextView)convertView.findViewById(R.id.chatlist_last)).setText(chat.lastMessage);
                 return convertView;
             }
         };
         reference.child("Chat").addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(final DataSnapshot dataSnapshot, String s) {
-                final String key=dataSnapshot.getKey();
-                reference.getParent().child(dataSnapshot.getKey()).child("Name").addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot data) {
-                        Chat tmp;
-                        if(data.exists()) {
-                            tmp = new Chat(key, data.getValue(String.class), "");
+                try {
+                    final String key = dataSnapshot.getKey();
+                    reference.getParent().child(dataSnapshot.getKey()).child("Name").addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot data) {
+                            Iterator<DataSnapshot> iterator=dataSnapshot.getChildren().iterator();
+                            for(int c=0;c<dataSnapshot.getChildrenCount()-1;c++) {
+                                iterator.next();
+                            }
+                            Chat tmp;
+                            if (data.exists()) {
+                                tmp = new Chat(key, data.getValue(String.class), iterator.next().child("msg").getValue(String.class));
+                            }
+                            else {
+                                tmp = new Chat(key, key, iterator.next().child("msg").getValue(String.class));
+                            }
+                            chatHashMap.put(key, tmp);
+                            chatAdapter.add(tmp);
                         }
-                        else {
-                            tmp = new Chat(key, key, "");
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            //
                         }
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            tmp.messages.add(snapshot.getValue(String.class));
-                        }
-                        chatHashMap.put(key, tmp);
-                        chatAdapter.add(tmp);
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        //
-                    }
-                });
+                    });
+                }
+                catch(Exception ignored) {}
             }
 
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-//                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-//                    chatHashMap.get(dataSnapshot.getKey()).messages.add(snapshot.getValue(String.class));
-//                    FragmentChatbox.adapter.add(snapshot.getValue(String.class));
-//                }
-//                chatAdapter.notifyDataSetChanged();
-//                FragmentChatbox.adapter.notifyDataSetChanged();
+                try {
+                    Iterator<DataSnapshot> iterator=dataSnapshot.getChildren().iterator();
+                    for(int c=0;c<dataSnapshot.getChildrenCount()-1;c++) {
+                        iterator.next();
+                    }
+                    Chat tmp=chatHashMap.get(dataSnapshot.getKey());
+                    tmp.lastMessage=iterator.next().child("msg").getValue(String.class);
+                    chatAdapter.notifyDataSetChanged();
+                    notifChatAdapter.add("New message from "+tmp.name);
+                    notifChatAdapter.notifyDataSetChanged();
+                }
+                catch(Exception ignored) {}
             }
 
             @Override
@@ -267,54 +294,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
-        notifChatAdapter=new ArrayAdapter<String>(this, R.layout.notification_view, notifChatList) {
-            @NonNull
-            @Override
-            public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-                if(convertView==null) {
-                    convertView=getLayoutInflater().inflate(R.layout.notification_view, parent, false);
-                }
-                ((TextView)convertView.findViewById(R.id.notif_text)).setText(notifChatList.get(position));
-                return super.getView(position, convertView, parent);
-            }
-        };
-        reference.child("Notifications").addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                try {
-                    if (dataSnapshot.getKey().equals("Chat")) {
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            notifChatAdapter.add(snapshot.getValue(String.class));
-                        }
-                    }
-                }
-                catch(Exception ignored) {}
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        erp=reference.getKey();
         reference.child("Name").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -322,7 +305,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     name=dataSnapshot.getValue(String.class);
                     ((TextView)findViewById(R.id.nav_nameview)).setText(name);
                 }
-                ((TextView)findViewById(R.id.nav_idview)).setText(reference.getKey());
+                ((TextView)findViewById(R.id.nav_idview)).setText(erp);
             }
 
             @Override
@@ -336,15 +319,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         transaction.replace(R.id.container, fragment, "home");
         transaction.commit();
     }
-
-
-
-
-
-
-
-
-
 
 
 
@@ -411,6 +385,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         else if(id == R.id.nav_signout) {
             LoginActivity.prefs.edit().remove("u_pwd").apply();
             startActivity(new Intent(this, LoginActivity.class));
+//            getFragmentManager().beginTransaction().remove(getFragmentManager().findFragmentById(R.id.container)).commit();
             finish();
         }
         ((DrawerLayout)findViewById(R.id.drawer_layout)).closeDrawer(GravityCompat.START);

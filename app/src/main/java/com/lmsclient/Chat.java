@@ -1,20 +1,17 @@
 package com.lmsclient;
 
-import java.util.ArrayList;
-
 /**
  * Created by Mahad Ahmed on 12/30/17.
  */
 
-public class Chat {
+class Chat {
     String otherUser;
     String name;
-    ArrayList<String> messages;
+    String lastMessage;
 
-    public Chat(String user, String n, String msg) {
+    Chat(String user, String n, String m) {
         otherUser=user;
         name=n;
-        messages=new ArrayList<>();
-        messages.add(msg);
+        lastMessage=m;
     }
 }
