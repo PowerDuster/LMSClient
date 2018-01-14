@@ -1,5 +1,6 @@
 package com.lmsclient;
 
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -8,6 +9,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -19,7 +21,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -27,14 +28,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -64,6 +60,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     public static FragmentManager fragmentManager;
 
+    private NotificationManager notificationManager;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +70,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        notificationManager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         fragmentManager=getSupportFragmentManager();
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
@@ -105,9 +104,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 return convertView;
             }
         };
-
-        String date = new SimpleDateFormat("E dd-MM-yyyy hh:mma", Locale.getDefault()).format(new Date());
-        Toast.makeText(this, date, Toast.LENGTH_LONG).show();
 
         assignmentListAdapter=new ArrayAdapter<String[]>(this, R.layout.list_view_item, assignmentList) {
             @NonNull
@@ -155,9 +151,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                 pres.append(snapshot.getValue(String.class));
                                 pres.append("\n");
                             }
+                            NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), "res");
+                            builder.setSmallIcon(R.drawable.common_full_open_on_phone)
+                                    .setAutoCancel(true).setVibrate(new long[]{500, 200, 30, 100});
                             for (DataSnapshot snapshot : dataSnap.child("Assignments").getChildren()) {
                                 assignmentListAdapter.add(new String[] {"Due at "+snapshot.child("Due").getValue(String.class),
-                                    snapshot.child("Title").getValue(String.class)});
+                                    snapshot.child("Title").getValue(String.class)+" for "+dataSnap.child("Name").getValue(String.class)});
+                                builder.setContentTitle(snapshot.child("Title").getValue(String.class)).setContentText("Due at "+snapshot.child("Due").getValue(String.class));
+                                notificationManager.notify(1, builder.build());
                             }
                             ///////////////////////////////////////////////
                             if(dataSnap.child("Files").getChildrenCount()>0) {
@@ -273,6 +274,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     chatAdapter.notifyDataSetChanged();
                     notifChatAdapter.add("New message from "+tmp.name);
                     notifChatAdapter.notifyDataSetChanged();
+                    NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), "res");
+                    builder.setSmallIcon(R.drawable.common_full_open_on_phone).setContentTitle(tmp.name).setContentText(tmp.lastMessage)
+                            .setAutoCancel(true).setVibrate(new long[]{500, 200, 30, 100});
+                    notificationManager.notify(2, builder.build());
                 }
                 catch(Exception ignored) {}
             }
